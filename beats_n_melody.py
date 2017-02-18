@@ -15,12 +15,12 @@ from tools.player import AudioPlayer
 
 TEMPO = 100
 BEATS_PER_MEASURE = 4
-CHORDS_PROGRESSION = ["Am4", "Am4", "F4", "Em4"]
+CHORDS_PROGRESSION = ["Am0", "Am0", "F0", "Em0"]
 LOOPS_COUNT = 10
 
 BEATS_TRACK_FILE = None
-BEATS_TRACK_FILE = "tools/data/beats/sample_3.wav"
-BEATS_TRACK_BEAT_COUNT = 4
+BEATS_TRACK_FILE = "tools/data/beats/sample_6.wav"
+BEATS_TRACK_BEAT_COUNT = 8
 
 pitch_filepath = path.join(path.dirname(path.realpath(__file__)), "tools/data/pitches.json")
 with open(pitch_filepath) as pitch_file:
@@ -41,7 +41,7 @@ def get_progression_freqs(progression : List[str]) -> List[float]:
     for chord in progression:
         chords_freqs = get_chord_harmonies(chord)
         for i in range(BEATS_PER_MEASURE):
-            track_frequencies.append(chords_freqs[1] if blinker else chords_freqs[0])
+            track_frequencies.append(chords_freqs[2] if blinker else chords_freqs[0])
             blinker = not blinker
     return track_frequencies
 
@@ -53,7 +53,8 @@ if __name__ == "__main__":
     else:
         rate, beats_track = wavfile.read(BEATS_TRACK_FILE)
         beat_duration = len(beats_track) / (rate * BEATS_TRACK_BEAT_COUNT)
-        beats_track_looped = np.tile(beats_track, LOOPS_COUNT * BEATS_TRACK_BEAT_COUNT)
+        beats_track_looped = np.tile(beats_track,
+                                     LOOPS_COUNT * BEATS_PER_MEASURE * LEN(CHORDS_PROGRESSION // BEATS_TRACK_BEAT_COUNT))
 
     logging.info("Beat time : %dms" % (beat_duration * 1000))
     logging.info("Measure time : %dms" % (beat_duration * 1000 * 4))
@@ -69,11 +70,11 @@ if __name__ == "__main__":
         )
     logging.info("Rendering audio")
 
-    voice = Voice(lang="fr", voice_id=3)
+    voice = Voice(lang="fr", voice_id=2)
     wav = voice.to_audio(progression_phonems)
     if BEATS_TRACK_FILE is not None:
         rate, wave_array = to_f32_16k(wav)
-        mixed_tracks = mix_tracks(beats_track_looped * 0.6, wave_array * 0.4, align="left")
+        mixed_tracks = mix_tracks(beats_track_looped * 0.6, wave_array * 0.2, align="left")
         wav = to_wav_bytes(mixed_tracks, 16000)
     player = AudioPlayer()
     player.set_file(BytesIO(wav))
